@@ -42,16 +42,6 @@ class Category implements \D2U_Helper\ITranslationHelper {
 	var $translation_needs_update = "delete";
 
 	/**
-	 * @var int Unix timestamp containing the last update date
-	 */
-	var $updatedate = 0;
-	
-	/**
-	 * @var string Redaxo update user name
-	 */
-	var $updateuser = "";
-
-	/**
 	 * Constructor. Reads a category stored in database.
 	 * @param int $category_id Category ID.
 	 * @param int $clang_id Redaxo clang id.
@@ -75,8 +65,6 @@ class Category implements \D2U_Helper\ITranslationHelper {
 			if($result->getValue("translation_needs_update") != "") {
 				$this->translation_needs_update = $result->getValue("translation_needs_update");
 			}
-			$this->updatedate = $result->getValue("updatedate");
-			$this->updateuser = $result->getValue("updateuser");
 		}
 	}
 	
@@ -102,6 +90,9 @@ class Category implements \D2U_Helper\ITranslationHelper {
 				."WHERE category_id = ". $this->category_id;
 			$result = \rex_sql::factory();
 			$result->setQuery($query);
+
+			// reset priorities
+			$this->setPriority(TRUE);			
 		}
 	}
 	
@@ -145,12 +136,7 @@ class Category implements \D2U_Helper\ITranslationHelper {
 		if($only_online) {
 			$query .= "AND online_status = 'online' ";
 		}
-		if(\rex_addon::get('d2u_news')->getConfig('default_sort', 'name') == 'priority') {
-			$query .= 'ORDER BY priority ASC';
-		}
-		else {
-			$query .= 'ORDER BY name ASC';
-		}
+		$query .= 'ORDER BY `date` DESC';
 		$result = \rex_sql::factory();
 		$result->setQuery($query);
 		
@@ -237,9 +223,7 @@ class Category implements \D2U_Helper\ITranslationHelper {
 						."category_id = '". $this->category_id ."', "
 						."clang_id = '". $this->clang_id ."', "
 						."name = '". addslashes($this->name) ."', "
-						."translation_needs_update = '". $this->translation_needs_update ."', "
-						."updatedate = ". time() .", "
-						."updateuser = '". \rex::getUser()->getLogin() ."' ";
+						."translation_needs_update = '". $this->translation_needs_update ."' ";
 
 				$result = \rex_sql::factory();
 				$result->setQuery($query);
@@ -247,18 +231,14 @@ class Category implements \D2U_Helper\ITranslationHelper {
 			}
 		}
 		
-		// Update URLs
-		if(\rex_addon::get("url")->isAvailable()) {
-			\UrlGenerator::generatePathFile([]);
-		}
-		
 		return $error;
 	}
 	
 	/**
-	 * Reassigns priority to all Categories in database.
+	 * Reassigns priorities in database.
+	 * @param boolean $delete Reorder priority after deletion
 	 */
-	private function setPriority() {
+	private function setPriority($delete = FALSE) {
 		// Pull prios from database
 		$query = "SELECT category_id, priority FROM ". \rex::getTablePrefix() ."d2u_news_categories "
 			."WHERE category_id <> ". $this->category_id ." ORDER BY priority";
@@ -270,8 +250,8 @@ class Category implements \D2U_Helper\ITranslationHelper {
 			$this->priority = 1;
 		}
 		
-		// When prio is too high, simply add at end 
-		if($this->priority > $result->getRows()) {
+		// When prio is too high or was deleted, simply add at end 
+		if($this->priority > $result->getRows() || $delete) {
 			$this->priority = $result->getRows() + 1;
 		}
 

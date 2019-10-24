@@ -91,7 +91,7 @@ if ($func == 'edit' || $func == 'add') {
 		</div>
 	</form>
 	<br>
-	<script type='text/javascript'>
+	<script>
 		jQuery(document).ready(function($) {
 			$('legend').each(function() {
 				$(this).addClass('open');
@@ -108,7 +108,7 @@ if ($func == '') {
 	$query = 'SELECT fair_id, name, city, date_start, date_end '
 		. 'FROM '. rex::getTablePrefix() .'d2u_news_fairs '
 		. 'ORDER BY date_start DESC';
-    $list = rex_list::factory($query);
+    $list = rex_list::factory($query, 1000);
 
     $list->addTableAttribute('class', 'table-striped table-hover');
 

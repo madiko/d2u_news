@@ -26,6 +26,8 @@ $link_id_overview = "REX_LINK[id=1 output=id]";
 $category_id = "REX_VALUE[2]" > 0 ? "REX_VALUE[2]" : 0;
 $category = $category_id > 0 ? new \D2U_News\Category($category_id, rex_clang::getCurrentId()) : FALSE;
 
+$heading = "REX_VALUE[4]" != "" ? "REX_VALUE[4]" : \Sprog\Wildcard::get('d2u_news_news');
+
 // If News Types Plugin is activated
 $selected_news_types = [];
 if(rex_plugin::get('d2u_news', 'news_types')->isAvailable()) {
@@ -38,7 +40,7 @@ if(rex_plugin::get('d2u_news', 'news_types')->isAvailable()) {
 if(rex::isBackend()) {
 	// Ausgabe im BACKEND	
 ?>
-	<h1 style="font-size: 1.5em;">News</h1>
+	<h2 style="font-size: 1.5em;"><?php print $heading; ?></h2>
 	<p>Anzahl auszugebender News: REX_VALUE[1]</p>
 	<p>Gewählte Kategorie: <?php print ($category !== FALSE ? $category->name : 'Alle Kategorien'); ?></p>
 	<p>Gewählte Nachrichtenarten:
@@ -58,18 +60,15 @@ if(rex::isBackend()) {
 	</p>
 <?php
 }
-else if(rex_addon::get("d2u_news")->isAvailable()) {
+else if(\rex_addon::get("d2u_news")->isAvailable()) {
 	// FRONTEND
 	$news = [];
 	if($category !== FALSE) {
 		$news = $category->getNews(TRUE);
 	}
-	else {
-		$news = \D2U_News\News::getAll(rex_clang::getCurrentId(), $counter_news, TRUE);
-	}
-
-	// If News Types Plugin is activated: filter
-	if(rex_plugin::get('d2u_news', 'news_types')->isAvailable()) {
+	else if(rex_plugin::get('d2u_news', 'news_types')->isAvailable()) {
+		// If News Types Plugin is activated: filter
+		$news = \D2U_News\News::getAll(rex_clang::getCurrentId());
 		if(count($selected_news_types) > 0) {
 			foreach ($news as $current_news) {
 				foreach($selected_news_types as $selected_news_type) {
@@ -80,39 +79,33 @@ else if(rex_addon::get("d2u_news")->isAvailable()) {
 			}
 		}
 	}
-
+	else {
+		//
+		$news = \D2U_News\News::getAll(rex_clang::getCurrentId(), $counter_news, TRUE);
+	}
+	
+	// Only predefined number of news
+	$news = array_slice($news, 0, $counter_news);
+	
 	if(count($news) > 0) {
 	?>
 		<div class="col-12">
 			<div class="row">
 				<div class="col-12">
-					<h1><?php print $tag_open . 'd2u_news_news'. $tag_close; ?></h1>
+					<h2><?php print $heading; ?></h2>
 				</div>
 			</div>
 			<?php
 				foreach ($news as $nachricht) {
 					print '<div class="row news">';
 					
-					$url = "";
-					// In case link is set to a machine from D2U Machinery Addon
-					if($nachricht->link_type == "machine" && $nachricht->d2u_machines_machine_id > 0) {
-						$machine = new Machine($nachricht->d2u_machines_machine_id, rex_clang::getCurrentId());
-						$url = $machine->getURL();
-					}
-					else if($nachricht->link_type == "article" && $nachricht->article_id > 0) {
-						$url = rex_getUrl($nachricht->article_id);
-					}
-					else if($nachricht->link_type == "url" && $nachricht->url != "") {
-						$url = $nachricht->url;
-					}
-
 					if($nachricht->picture != "") {
 						print '<div class="col-12 col-sm-4">';
-						if($url != "") {
-							print '<a href="'. $url .'">';
+						if($nachricht->getUrl() != "") {
+							print '<a href="'. $nachricht->getUrl() .'">';
 						}
-						print '<img src="index.php?rex_media_type=news_preview&rex_media_file='. $nachricht->picture .'" alt='. $nachricht->name .' class="listpic">';
-						if($url != "") {
+						print '<img src="index.php?rex_media_type=news_preview&rex_media_file='. $nachricht->picture .'" alt="'. $nachricht->name .'" class="listpic">';
+						if($nachricht->getUrl() != "") {
 							print '</a>';
 						}
 						print '</div>';
@@ -123,22 +116,22 @@ else if(rex_addon::get("d2u_news")->isAvailable()) {
 						print '<div class="col-12">';
 					}
 
-					print '<h2 class="news">';
-					if($url != "") {
-						print '<a href="'. $url .'">';
+					print '<h3 class="news">';
+					if($nachricht->getUrl() != "") {
+						print '<a href="'. $nachricht->getUrl() .'">';
 					}
 					print $nachricht->name;
-					if($url != "") {
+					if($nachricht->getUrl() != "") {
 						print '</a>';
 					}
-					print '</h2>';
-					print '<p><time pubdate="" datetime="'. formatDate($nachricht->date, rex_clang::getCurrentId()) .'">'. formatDate($nachricht->date, rex_clang::getCurrentId()) .'</time></p>';
+					print '</h3>';
+					print '<time datetime="'. $nachricht->date .'">'. formatDate($nachricht->date, rex_clang::getCurrentId()) .'</time>';
 						
 					if($nachricht->teaser != "") {
-						print '<p class="text">'. d2u_addon_frontend_helper::prepareEditorField($nachricht->teaser) .'</p>';
+						print d2u_addon_frontend_helper::prepareEditorField($nachricht->teaser);
 					}
-					else if($url != "") {
-						print '<p class="text"><a href="'. $url .'">'. $url .'</a></p>';	
+					else if($nachricht->getUrl() != "") {
+						print '<p class="text"><a href="'. $nachricht->getUrl() .'">'. $nachricht->getUrl() .'</a></p>';	
 					}
 					print '</div>';
 					print '</div>';

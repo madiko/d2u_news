@@ -37,16 +37,6 @@ class Type implements \D2U_Helper\ITranslationHelper {
 	var $translation_needs_update = "delete";
 
 	/**
-	 * @var int Unix timestamp containing the last update date
-	 */
-	var $updatedate = 0;
-	
-	/**
-	 * @var string Redaxo update user name
-	 */
-	var $updateuser = "";
-
-	/**
 	 * Constructor. Reads a category stored in database.
 	 * @param int $type_id Type ID.
 	 * @param int $clang_id Redaxo clang id.
@@ -69,8 +59,6 @@ class Type implements \D2U_Helper\ITranslationHelper {
 			if($result->getValue("translation_needs_update") != "") {
 				$this->translation_needs_update = $result->getValue("translation_needs_update");
 			}
-			$this->updatedate = $result->getValue("updatedate");
-			$this->updateuser = $result->getValue("updateuser");
 		}
 	}
 	
@@ -96,6 +84,9 @@ class Type implements \D2U_Helper\ITranslationHelper {
 				."WHERE type_id = ". $this->type_id;
 			$result = \rex_sql::factory();
 			$result->setQuery($query);
+
+			// reset priorities
+			$this->setPriority(TRUE);			
 		}
 	}
 	
@@ -240,18 +231,14 @@ class Type implements \D2U_Helper\ITranslationHelper {
 			}
 		}
 		
-		// Update URLs
-		if(\rex_addon::get("url")->isAvailable()) {
-			\UrlGenerator::generatePathFile([]);
-		}
-		
 		return $error;
 	}
 	
 	/**
-	 * Reassigns priority to all Categories in database.
+	 * Reassigns priorities in database.
+	 * @param boolean $delete Reorder priority after deletion
 	 */
-	private function setPriority() {
+	private function setPriority($delete = FALSE) {
 		// Pull prios from database
 		$query = "SELECT type_id, priority FROM ". \rex::getTablePrefix() ."d2u_news_types "
 			."WHERE type_id <> ". $this->type_id ." ORDER BY priority";
@@ -263,8 +250,8 @@ class Type implements \D2U_Helper\ITranslationHelper {
 			$this->priority = 1;
 		}
 		
-		// When prio is too high, simply add at end 
-		if($this->priority > $result->getRows()) {
+		// When prio is too high or was deleted, simply add at end 
+		if($this->priority > $result->getRows() || $delete) {
 			$this->priority = $result->getRows() + 1;
 		}
 

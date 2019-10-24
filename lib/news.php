@@ -62,6 +62,11 @@ class News implements \D2U_Helper\ITranslationHelper {
 	var $url = '';
 	
 	/**
+	 * @var string News URL depending on news type
+	 */
+	private $news_url = '';
+	
+	/**
 	 * @var int Redaxo article id
 	 */
 	var $article_id = 0;
@@ -80,16 +85,6 @@ class News implements \D2U_Helper\ITranslationHelper {
 	 * @var string Date in format YYYY-MM-DD.
 	 */
 	var $date = "";
-	
-	/**
-	 * @var int Unix timestamp containing the last update date
-	 */
-	var $updatedate = 0;
-	
-	/**
-	 * @var string Redaxo update user name
-	 */
-	var $updateuser = "";
 	
 	/**
 	 * Constructor. Reads the object stored in database.
@@ -125,8 +120,6 @@ class News implements \D2U_Helper\ITranslationHelper {
 				$this->translation_needs_update = $result->getValue("translation_needs_update");
 			}
 			$this->date = $result->getValue("date");
-			$this->updatedate = $result->getValue("updatedate");
-			$this->updateuser = $result->getValue("updateuser");
 
 			if(\rex_plugin::get('d2u_news', 'news_types')->isAvailable()) {
 				$type_ids = preg_grep('/^\s*$/s', explode("|", $result->getValue("type_ids")), PREG_GREP_INVERT);
@@ -249,6 +242,26 @@ class News implements \D2U_Helper\ITranslationHelper {
 		
 		return $objects;
     }
+
+	/**
+	 * Get URL, depending on news type
+	 * @return string News URL
+	 */
+	public function getUrl() {
+		if($this->news_url == "") {
+			if($this->link_type == "article" && $this->article_id > 0) {
+				$this->news_url = rex_getUrl($this->article_id);
+			}
+			else if($this->link_type == "url") {
+				$this->news_url = $this->url;
+			}
+			else if($this->link_type == "machine") {
+				$machine = new \Machine($this->d2u_machines_machine_id, $this->clang_id);
+				$this->news_url = $machine->getURL();
+			}
+		}
+		return $this->news_url;
+    }
 	
 	/**
 	 * Updates or inserts the object into database.
@@ -298,9 +311,7 @@ class News implements \D2U_Helper\ITranslationHelper {
 						."clang_id = '". $this->clang_id ."', "
 						."name = '". addslashes($this->name) ."', "
 						."teaser = '". addslashes(htmlspecialchars($this->teaser)) ."', "
-						."translation_needs_update = '". $this->translation_needs_update ."', "
-						."updatedate = ". time() .", "
-						."updateuser = '". \rex::getUser()->getLogin() ."' ";
+						."translation_needs_update = '". $this->translation_needs_update ."' ";
 
 				$result = \rex_sql::factory();
 				$result->setQuery($query);

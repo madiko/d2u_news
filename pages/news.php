@@ -31,7 +31,7 @@ if (filter_input(INPUT_POST, "btn_save") == 1 || filter_input(INPUT_POST, "btn_a
 			$news->picture = $input_media[1];
 			$news->link_type = $form['link_type'];
 			$news->article_id = $link_ids["REX_INPUT_LINK"][1];
-			if(rex_addon::get('d2u_machinery')->isAvailable() && count(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE)) > 0) {
+			if(\rex_addon::get('d2u_machinery')->isAvailable() && count(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE)) > 0) {
 				$news->d2u_machines_machine_id = $form['d2u_machines_machine_id'];
 			}
 			$news->url = $form['url'];
@@ -135,10 +135,24 @@ if ($func == 'edit' || $func == 'add') {
 								else {
 									print '<input type="hidden" name="form[lang]['. $rex_clang->getId() .'][translation_needs_update]" value="">';
 								}
-								
-								d2u_addon_backend_helper::form_input('d2u_news_name', "form[lang][". $rex_clang->getId() ."][name]", $news->name, $required, $readonly_lang, "text");
-								d2u_addon_backend_helper::form_textarea('d2u_news_teaser', "form[lang][". $rex_clang->getId() ."][teaser]", $news->teaser, 5, FALSE, $readonly_lang, TRUE);
 							?>
+							<script>
+								// Hide on document load
+								$(document).ready(function() {
+									toggleClangDetailsView(<?php print $rex_clang->getId(); ?>);
+								});
+
+								// Hide on selection change
+								$("select[name='form[lang][<?php print $rex_clang->getId(); ?>][translation_needs_update]']").on('change', function(e) {
+									toggleClangDetailsView(<?php print $rex_clang->getId(); ?>);
+								});
+							</script>
+							<div id="details_clang_<?php print $rex_clang->getId(); ?>">
+								<?php
+									d2u_addon_backend_helper::form_input('d2u_news_name', "form[lang][". $rex_clang->getId() ."][name]", $news->name, $required, $readonly_lang, "text");
+									d2u_addon_backend_helper::form_textarea('d2u_news_teaser', "form[lang][". $rex_clang->getId() ."][teaser]", $news->teaser, 5, FALSE, $readonly_lang, TRUE);
+								?>
+							</div>
 						</div>
 					</fieldset>
 				<?php
@@ -161,12 +175,12 @@ if ($func == 'edit' || $func == 'add') {
 							$options_link_type["none"] = rex_i18n::msg('d2u_news_no_link');
 							$options_link_type["article"] = rex_i18n::msg('d2u_news_article');
 							$options_link_type["url"] = rex_i18n::msg('d2u_news_url');
-							if(rex_addon::get('d2u_machinery')->isAvailable() && count(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE)) > 0) {
+							if(\rex_addon::get('d2u_machinery')->isAvailable() && count(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE)) > 0) {
 								$options_link_type["machine"] = rex_i18n::msg('d2u_news_machine');
 							}
 							d2u_addon_backend_helper::form_select('d2u_news_link_type', 'form[link_type]', $options_link_type, [$news->link_type], 1, FALSE, $readonly_lang);
 
-							if(rex_addon::get('d2u_machinery')->isAvailable() && count(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE)) > 0) {
+							if(\rex_addon::get('d2u_machinery')->isAvailable() && count(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE)) > 0) {
 								$options_machines = [];
 								foreach(Machine::getAll(rex_config::get("d2u_helper", "default_lang"), TRUE) as $machine) {
 									$options_machines[$machine->machine_id] = $machine->name;
@@ -185,25 +199,17 @@ if ($func == 'edit' || $func == 'add') {
 						?>
 						<script>
 							function changeType() {
+								$('#LINK_1').hide();
+								$('#form\\[url\\]').hide();
+								$('#form\\[d2u_machines_machine_id\\]').hide();
 								if($('select[name="form\\[link_type\\]"]').val() === "article") {
 									$('#LINK_1').show();
-									$('#form\\[url\\]').hide();
-									$('#form\\[d2u_machines_machine_id\\]').hide();
 								}
 								else if($('select[name="form\\[link_type\\]"]').val() === "machine") {
-									$('#LINK_1').hide();
-									$('#form\\[url\\]').hide();
 									$('#form\\[d2u_machines_machine_id\\]').show();
 								}
 								else if($('select[name="form\\[link_type\\]"]').val() === "url") {
-									$('#LINK_1').hide();
 									$('#form\\[url\\]').show();
-									$('#form\\[d2u_machines_machine_id\\]').hide();
-								}
-								else {
-									$('#LINK_1').hide();
-									$('#form\\[url\\]').hide();
-									$('#form\\[d2u_machines_machine_id\\]').hide();
 								}
 							}
 							
@@ -259,7 +265,7 @@ if ($func == '') {
 		. 'LEFT JOIN '. rex::getTablePrefix() .'d2u_news_news_lang AS lang '
 			. 'ON refs.news_id = lang.news_id AND lang.clang_id = '. rex_config::get("d2u_helper", "default_lang") .' '
 		.'ORDER BY `date` DESC';
-    $list = rex_list::factory($query);
+    $list = rex_list::factory($query, 1000);
 
     $list->addTableAttribute('class', 'table-striped table-hover');
 

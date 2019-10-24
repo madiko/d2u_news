@@ -27,6 +27,31 @@ $d2u_module_manager->showManagerList();
 <h2>Support</h2>
 <p>Fehlermeldungen bitte im <a href="https://github.com/TobiasKrais/d2u_news" target="_blank">GitHub Repository</a> melden.</p>
 <h2>Changelog</h2>
+<p>1.1.3-DEV:</p>
+<ul>
+	<li>...</li>
+</ul>
+<p>1.1.2:</p>
+<ul>
+	<li>Methode News->getUrl() hinzugefügt. Gibt die URL der News zurück, abhängig vom Link Typ.</li>
+	<li>Nicht benötigte Felder "updatedate" und "updateuser" in Datenbank entfernt".</li>
+	<li>Listen im Backend werden jetzt nicht mehr in Seiten unterteilt.</li>
+	<li>Konvertierung der Datenbanktabellen zu utf8mb4.</li>
+	<li>Sprachdetails werden ausgeblendet, wenn Speicherung der Sprache nicht vorgesehen ist.</li>
+	<li>Bugfix: Categories->getNews() sortiert jetzt auch absteigend, wie alle anderen getNews() Methoden.</li>
+	<li>Bugfix: Sortierung der News enthielt Fehler.</li>
+	<li>Bugfix: Prioritäten wurden beim Löschen nicht reorganisiert.</li>
+</ul>
+<p>1.1.1:</p>
+<ul>
+	<li>Bugfix: Deaktiviertes Addon zu deinstallieren führte zu fatal error.</li>
+	<li>In den Einstellungen gibt es jetzt eine Option, eigene Übersetzungen in SProg dauerhaft zu erhalten.</li>
+	<li>Messe Plugin erlaubt im Namen und Ort nun einfache Anführungszeichen.</li>
+	<li>Module 40-1 und 40-3: alt Tag des Bildes war ohne Anführungszeichen.</li>
+	<li>Bugfix: Löschen von Sprachen schlug fehl.</li>
+	<li>Module 40-1: Optional kann individuelle Überschrift eingegeben werden. Überschriften wurden um eine Kategorie herabgestuft.</li>
+	<li>Bugfix Module: manchmal wurden weniger als die definierte Anzahl News ausgegeben.</li>
+</ul>
 <p>1.1.0:</p>
 <ul>
 	<li>Namespace "D2U_News" eingeführt. ACHTUNG: Module müssen angepasst werden!</li>
